@@ -203,4 +203,4 @@ MIT — see [LICENSE](LICENSE) for details.
 - [Anthropic](https://www.anthropic.com/) for the Claude API
 - [Prisma](https://www.prisma.io/) for the ORM
 - [bibtex-parse](https://www.npmjs.com/package/bibtex-parse) for BibTeX parsing
-- Inspired by the systematic review tooling gap identified while working on a corpus of 73 papers on ML for GNSS-based positioning in autonomous vehicles
+- Inspired by the systematic review tooling gap identified while working on a systematic review paper

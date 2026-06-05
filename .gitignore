@@ -5,8 +5,12 @@ node_modules/
 
 # Environment
 .env
+.env.example
 .env.local
 .env.*.local
+
+# AI assistant context
+CLAUDE.md
 
 # Build outputs
 client/dist/

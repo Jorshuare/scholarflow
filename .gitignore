@@ -12,6 +12,12 @@ node_modules/
 # AI assistant context
 CLAUDE.md
 
+# Internal documentation
+doc/
+
+# Design references
+photos/
+
 # Build outputs
 client/dist/
 server/dist/

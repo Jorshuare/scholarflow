@@ -4,8 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 
-import authRoutes    from './features/auth/auth.routes.js';
-import projectRoutes from './features/projects/projects.routes.js';
+import authRoutes       from './features/auth/auth.routes.js';
+import projectRoutes    from './features/projects/projects.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
 const app = express();

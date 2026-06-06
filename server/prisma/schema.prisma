@@ -31,10 +31,11 @@ model Project {
   papers       Paper[]
   tags         Tag[]
   chatMessages ChatMessage[]
+  criteria     Criterion[]
 }
 
 model Paper {
-  id              String     @id @default(cuid())
+  id              String            @id @default(cuid())
   projectId       String
   title           String
   authors         String?
@@ -42,12 +43,16 @@ model Paper {
   venue           String?
   doi             String?
   abstract        String?
-  status          Status     @default(PENDING)
+  status          Status            @default(PENDING)
   exclusionReason String?
   notes           String?
-  createdAt       DateTime   @default(now())
-  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rawText         String?
+  pdfProcessed    Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   paperTags       PaperTag[]
+  screeningResult ScreeningResult?
+  extractionResult ExtractionResult?
 }
 
 model Tag {
@@ -75,4 +80,44 @@ model ChatMessage {
   content   String
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Criterion {
+  id          String   @id @default(cuid())
+  projectId   String
+  type        String   // 'INCLUSION' or 'EXCLUSION'
+  code        String   // 'IC1', 'IC2', 'EC1', ...
+  description String
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ExtractionResult {
+  id           String   @id @default(cuid())
+  paperId      String   @unique
+  method       String?
+  dataset      String?
+  metric       String?
+  performance  String?
+  limitations  String?
+  futureWork   String?
+  contribution String?
+  failed       Boolean  @default(false)
+  extractedAt  DateTime @default(now())
+  paper        Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+}
+
+model ScreeningResult {
+  id                 String   @id @default(cuid())
+  paperId            String   @unique
+  recommendation     String   // 'INCLUDE' | 'EXCLUDE' | 'UNCERTAIN'
+  confidence         Int
+  matchedInclusion   String[]
+  failedInclusion    String[]
+  triggeredExclusion String[]
+  reasoning          String
+  humanOverride      Boolean  @default(false)
+  finalDecision      String?
+  processedAt        DateTime @default(now())
+  paper              Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
 }

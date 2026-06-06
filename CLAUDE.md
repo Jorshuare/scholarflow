@@ -166,16 +166,19 @@ index.js               # Server entry: listen on PORT
 
 ## Database Schema (Prisma)
 
-Six tables — see `server/prisma/schema.prisma` for the canonical source.
+Eight tables (+ 2 new) — see `server/prisma/schema.prisma` for the canonical source.
 
 | Table | Key columns |
 |-------|-------------|
 | `users` | id, email, password_hash, created_at |
 | `projects` | id, user_id, name, description, created_at |
-| `papers` | id, project_id, title, authors, year, venue, doi, abstract, status, exclusion_reason, notes |
+| `papers` | id, project_id, title, authors, year, venue, doi, abstract, status, exclusion_reason, notes, **rawText**, **pdfProcessed** |
 | `tags` | id, project_id, name, colour |
 | `paper_tags` | paper_id, tag_id (many-to-many join) |
 | `chat_messages` | id, project_id, role (user/assistant), content, created_at |
+| `criteria` | id, project_id, type (INCLUSION/EXCLUSION), code (IC1/EC1), description, created_at |
+| `screening_results` | id, paper_id (unique), recommendation, confidence, matched_inclusion[], failed_inclusion[], triggered_exclusion[], reasoning, human_override, final_decision, processed_at |
+| `extraction_results` | id, paper_id (unique), method, dataset, metric, performance, limitations, future_work, contribution, extracted_at |
 
 `status` is an enum: `PENDING | INCLUDED | EXCLUDED`
 
@@ -215,7 +218,25 @@ GET    /api/projects/:id/ai/history
 GET    /api/projects/:id/export/bibtex
 GET    /api/projects/:id/export/csv
 GET    /api/projects/:id/export/prisma.svg
-GET    /api/projects/:id/export/prisma.png
+GET    /api/projects/:id/export/prisma-counts
+GET    /api/projects/:id/export/screening-report   (NEW — methodology text for paper)
+
+# Feature A — Auto-Screening (NEW)
+GET    /api/projects/:id/criteria
+POST   /api/projects/:id/criteria
+DELETE /api/projects/:id/criteria/:cid
+POST   /api/projects/:id/screening/run        (202 Accepted, starts async job)
+GET    /api/projects/:id/screening/status     (returns {processed, total, status})
+GET    /api/projects/:id/screening/results    (?queue=included|excluded|uncertain)
+POST   /api/projects/:id/screening/confirm    ({decisions: [{paperId, finalDecision}]})
+PATCH  /api/projects/:id/screening/:pid/override  ({finalDecision, reason})
+
+# Feature B — PDF Extraction (NEW)
+POST   /api/projects/:id/papers/:pid/upload-pdf   (multipart, field: 'pdf')
+GET    /api/projects/:id/papers/:pid/extraction
+PATCH  /api/projects/:id/papers/:pid/extraction   ({field: value})
+GET    /api/projects/:id/evidence-matrix
+GET    /api/projects/:id/export/matrix.csv
 ```
 
 All routes except `/api/auth/*` require `Authorization: Bearer <token>`.
@@ -226,9 +247,12 @@ All routes except `/api/auth/*` require `Authorization: Bearer <token>`.
 
 - The Groq API key lives **only** in `server/.env` and is accessed via `server/src/config/env.js`.
 - `ai.service.js` fetches all papers for the project, builds a structured context block (titles + abstracts + notes + status), prepends it to every user message, then calls the Groq chat completions API.
+- **Extended context (Feature B):** `ai.service.js` also injects `ExtractionResult` fields (method, dataset, metric, performance, limitations) for all INCLUDED papers that have been extracted. This enables grounded gap analysis.
 - The system prompt instructs the model to only cite papers present in the context and to include paper IDs in citations so the frontend can resolve them.
 - Model: use `process.env.GROQ_MODEL` (default `llama-3.3-70b-versatile`). Never hard-code the model string.
-- Never stream AI responses in Phase 3 — simple request/response is sufficient for the deadline.
+- **Auto-screening prompt** (Feature A): must request JSON-only response. Wrap `JSON.parse` in try/catch; retry once with simplified prompt on failure. Apply 2-second delay between Groq calls to stay within free-tier rate limit (30 req/min).
+- **Extraction prompt** (Feature B): use first 2000 + last 1000 characters of rawText. Request JSON-only. Retry with exponential backoff (2s → 4s → 8s) on rate limit. If rawText < 200 chars after pdf-parse, mark as scanned PDF and skip Groq.
+- Never stream AI responses — simple request/response for all endpoints.
 
 ---
 
@@ -264,10 +288,87 @@ The SVG is generated server-side in `server/src/features/exports/prisma.svg.js` 
 
 ## Phase Checklist
 
-- [ ] **Phase 1** — Scaffolding, auth (register/login/JWT), DB schema, routing skeleton
-- [ ] **Phase 2** — BibTeX/CSV import, Paper Library + filters, Screening Mode, tags
-- [ ] **Phase 3** — PRISMA diagram, AI Assistant, Extraction Table
-- [ ] **Phase 4** — Exports, Railway + Netlify deploy, Docker compose, documentation
+- [x] **Phase 1** — Scaffolding, auth (register/login/JWT), DB schema, routing skeleton
+- [x] **Phase 2** — BibTeX/CSV import, Paper Library + filters, Screening Mode, Tags UI
+- [x] **Phase 3** — PRISMA diagram, AI Assistant, Extraction Table (notes-based)
+- [x] **Phase 3b** — Light-mode UI overhaul, Tags with colour palette, PRISMA live diagram
+- [ ] **Phase 4A** — AI Auto-Screening: Criteria Manager, Groq pipeline, three-queue review, methodology export
+- [ ] **Phase 4B** — PDF Knowledge Extraction: upload → pdf-parse → Groq → Evidence Matrix, Gap Analysis
+- [ ] **Phase 5** — Deploy (Railway + Netlify), Docker compose, documentation
+
+---
+
+## Feature A — Auto-Screening Architecture
+
+### New server files
+```
+server/src/features/auto-screening/
+  criteria.routes.js
+  criteria.controller.js
+  criteria.service.js
+  autoScreening.routes.js
+  autoScreening.controller.js
+  autoScreening.service.js   # Groq pipeline, 2s delay, JSON parse + retry
+```
+
+### New client files
+```
+client/src/features/screening/
+  CriteriaManager.jsx        # IC/EC list + add/delete form
+  AutoScreeningProgress.jsx  # live progress bar while Groq runs
+  ScreeningQueues.jsx        # three-column: included / uncertain / excluded
+client/src/services/
+  criteria.service.js
+  autoScreening.service.js
+```
+
+### Groq confidence thresholds
+| Response | Confidence | Queue |
+|----------|-----------|-------|
+| INCLUDE | ≥ 80 | Auto-Included |
+| INCLUDE | < 80 | Needs Review |
+| EXCLUDE | ≥ 80 | Auto-Excluded |
+| EXCLUDE | < 80 | Needs Review |
+| UNCERTAIN | any | Needs Review |
+
+### Rate limit strategy
+- 2-second delay between each Groq call
+- 100 papers ≈ 3.5 minutes total
+- Frontend polls `/screening/status` every 3 seconds
+- Status field: `IDLE | RUNNING | COMPLETE | FAILED`
+
+---
+
+## Feature B — PDF Extraction Architecture
+
+### New server files
+```
+server/src/features/extraction/
+  extraction.routes.js
+  extraction.controller.js
+  extraction.service.js      # pdf-parse + Groq, exponential backoff
+  evidenceMatrix.controller.js
+```
+
+### New client files
+```
+client/src/features/extraction/
+  FullTextQueue.jsx          # INCLUDED papers awaiting PDF upload
+  PDFUploadPanel.jsx         # drop zone + extraction status per paper
+  EvidenceMatrix.jsx         # spreadsheet table: method/dataset/metric/etc
+client/src/services/
+  extraction.service.js
+```
+
+### PDF handling rules
+- multer memoryStorage only — PDF never written to disk
+- pdf-parse runs on buffer → rawText saved to `papers.rawText`
+- PDF buffer discarded after text extraction
+- If rawText.length < 200 → scanned PDF warning, skip Groq, allow manual entry
+- rawText can be cleared after extraction to save DB space
+
+### Extraction fields
+`method · dataset · metric · performance · limitations · futureWork · contribution`
 
 ---
 

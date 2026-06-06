@@ -27,58 +27,66 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F1117]">
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F2F8]">
       <div className="w-full max-w-sm">
-        <div className="mb-8">
-          <h1 className="text-xl font-semibold text-[#F0F2F8]">ScholarFlow</h1>
-          <p className="text-sm text-[#7B7F96] mt-1">Create your account</p>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#E4E7EF] overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+
+          <div className="px-8 py-8">
+            <div className="mb-7">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
+                ScholarFlow
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">Create your account</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  placeholder="••••••••"
+                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                />
+              </div>
+
+              {error && (
+                <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition-colors mt-2"
+              >
+                {loading ? 'Creating account…' : 'Create account'}
+              </button>
+            </form>
+
+            <p className="text-xs text-gray-500 mt-6 text-center">
+              Already have an account?{' '}
+              <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-[#7B7F96] mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-[#1A1D27] border border-[#2A2D3A] rounded-lg px-3 py-2 text-sm text-[#F0F2F8] placeholder-[#7B7F96] focus:outline-none focus:border-indigo-500 transition-colors"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-[#7B7F96] mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full bg-[#1A1D27] border border-[#2A2D3A] rounded-lg px-3 py-2 text-sm text-[#F0F2F8] placeholder-[#7B7F96] focus:outline-none focus:border-indigo-500 transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-400">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors"
-          >
-            {loading ? 'Creating account…' : 'Create account'}
-          </button>
-        </form>
-
-        <p className="text-xs text-[#7B7F96] mt-6 text-center">
-          Already have an account?{' '}
-          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-            Sign in
-          </Link>
-        </p>
       </div>
     </div>
   );

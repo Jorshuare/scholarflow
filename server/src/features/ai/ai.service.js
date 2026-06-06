@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 import prisma from '../../config/prisma.js';
 import { GROQ_MODEL } from '../../config/env.js';
+import { retrieveChunks } from '../rag/rag.service.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -47,17 +48,33 @@ export async function chat(projectId, userId, userMessage) {
     take:    20,
   });
 
+  // Retrieve most relevant chunks from indexed PDFs via pgvector cosine search.
+  // Falls back silently to context-stuffing if RAG is unavailable (no HF key, no chunks).
+  let ragContext = '';
+  try {
+    const chunks = await retrieveChunks(projectId, userMessage, 5);
+    if (chunks.length > 0) {
+      ragContext = '\n\n--- RETRIEVED PASSAGES (most relevant to this question) ---\n' +
+        chunks.map((c, i) =>
+          `[Passage ${i + 1} from: ${c.title} · Relevance: ${Math.round(Number(c.similarity) * 100)}%]\n${c.text}`
+        ).join('\n\n');
+    }
+  } catch (err) {
+    console.warn('[RAG] Retrieval skipped:', err.message);
+  }
+
   const systemPrompt = `You are a research assistant for a systematic literature review project titled "${project.name}".
 You have access to the following papers in the corpus:
 
-${buildCorpusContext(papers)}${buildExtractionContext(papers)}
+${buildCorpusContext(papers)}${buildExtractionContext(papers)}${ragContext}
 
 Rules:
-- Only reference papers listed above. Never invent citations.
+- Prefer the RETRIEVED PASSAGES above when answering — they contain exact text from the papers.
+- Only reference papers listed in the corpus. Never invent citations.
 - When citing a paper, include its ID in brackets e.g. [ID:abc123].
 - Be concise and academic in tone.
 - If asked about papers not in the corpus, say they are not in the library.
-- When doing gap analysis, reason only from the structured extraction data provided.`;
+- When doing gap analysis, reason from the structured extraction data and retrieved passages.`;
 
   const messages = [
     ...history.map(m => ({ role: m.role, content: m.content })),

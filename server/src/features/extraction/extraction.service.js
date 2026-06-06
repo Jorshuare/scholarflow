@@ -4,6 +4,7 @@ const pdfParse = require('pdf-parse');
 import Groq from 'groq-sdk';
 import prisma from '../../config/prisma.js';
 import { GROQ_MODEL } from '../../config/env.js';
+import { indexPaper } from '../rag/rag.service.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -109,7 +110,12 @@ export async function uploadAndExtract(projectId, userId, paperId, fileBuffer) {
     update: { ...data, extractedAt: new Date() },
   });
 
-  // Clear rawText to save DB space after extraction
+  // Index paper into pgvector for RAG — fire-and-forget so response returns immediately.
+  indexPaper(paperId, projectId, rawText).catch(err =>
+    console.error('[RAG] Indexing failed for paper', paperId, err.message)
+  );
+
+  // Clear rawText after handing off to RAG indexer.
   await prisma.paper.update({
     where: { id: paperId },
     data:  { rawText: null },

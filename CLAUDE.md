@@ -35,7 +35,9 @@ scholarflow/
 | ORM | Prisma | schema at `server/prisma/schema.prisma` |
 | Database | PostgreSQL 16 | |
 | BibTeX | bibtex-parse (npm) | server-side only |
-| AI | Anthropic Claude API | backend proxy — key never touches browser |
+| AI chat / auto-screen | Groq (`llama-3.3-70b-versatile`) | backend proxy — key never touches browser |
+| Embeddings (RAG) | HuggingFace Inference API | `sentence-transformers/all-MiniLM-L6-v2`, 384-dim, free tier |
+| Vector search | pgvector (Postgres extension) | enabled on Neon — no separate vector DB needed |
 
 ---
 
@@ -179,6 +181,7 @@ Eight tables (+ 2 new) — see `server/prisma/schema.prisma` for the canonical s
 | `criteria` | id, project_id, type (INCLUSION/EXCLUSION), code (IC1/EC1), description, created_at |
 | `screening_results` | id, paper_id (unique), recommendation, confidence, matched_inclusion[], failed_inclusion[], triggered_exclusion[], reasoning, human_override, final_decision, processed_at |
 | `extraction_results` | id, paper_id (unique), method, dataset, metric, performance, limitations, future_work, contribution, extracted_at |
+| `paper_chunks` | id, paper_id, project_id, chunk_index, text, **embedding vector(384)**, created_at |
 
 `status` is an enum: `PENDING | INCLUDED | EXCLUDED`
 
@@ -256,6 +259,38 @@ All routes except `/api/auth/*` require `Authorization: Bearer <token>`.
 
 ---
 
+## RAG Architecture (Phase 6)
+
+### Overview
+Replaces context-stuffing in the AI assistant with pgvector-based semantic retrieval.  
+Full plan: `RAG_IMPLEMENTATION_PLAN.md`.
+
+### How it works
+1. **Indexing** (triggered on PDF upload): `rawText` → `chunkText()` (384-word chunks, 38-word overlap) → `embedTexts()` (HuggingFace API) → stored in `paper_chunks` with `vector(384)` column.
+2. **Retrieval** (triggered on every AI chat message): user query → `embedTexts()` → pgvector cosine search (`<=>`) → top-5 most relevant passages across all indexed papers in the project.
+3. **Prompting**: retrieved passages are injected *after* the existing corpus metadata block, labelled "RETRIEVED PASSAGES". Model is instructed to prefer these over the abstract-only data.
+
+### Key rules
+- `HF_API_KEY` lives only in `server/.env` — never touches the browser.
+- If `HF_API_KEY` is missing or HuggingFace API fails, the AI service silently falls back to context-stuffing — no hard crash.
+- `indexPaper()` is fire-and-forget (not awaited on the upload response) so PDF upload UX is not blocked.
+- Re-uploading a PDF deletes old chunks for that paper and re-indexes from scratch.
+- Chunk size: 384 words ≈ 512 tokens. Overlap: 38 words (10%). Minimum chunk: 40 words.
+- Embedding model: `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions). Vector distance: cosine (`<=>`).
+- pgvector must be enabled on Neon before running migrations: `CREATE EXTENSION IF NOT EXISTS vector;`
+- Prisma requires `previewFeatures = ["postgresqlExtensions"]` and `extensions = [vector]` in schema.
+- Use `pgvector.toSql(float[])` for INSERT and `$queryRaw` for similarity search — Prisma does not natively support the `vector` type.
+
+### New files
+```
+server/src/features/rag/
+  chunker.js     # chunkText(rawText) → string[]
+  embedder.js    # embedTexts(texts[]) → float[][] via HuggingFace API
+  rag.service.js # indexPaper(paperId, projectId, rawText) + retrieveChunks(projectId, query, topK)
+```
+
+---
+
 ## Coding Conventions
 
 - **JavaScript, not TypeScript** — reduces setup overhead given the 7-day demo deadline.
@@ -292,9 +327,10 @@ The SVG is generated server-side in `server/src/features/exports/prisma.svg.js` 
 - [x] **Phase 2** — BibTeX/CSV import, Paper Library + filters, Screening Mode, Tags UI
 - [x] **Phase 3** — PRISMA diagram, AI Assistant, Extraction Table (notes-based)
 - [x] **Phase 3b** — Light-mode UI overhaul, Tags with colour palette, PRISMA live diagram
-- [ ] **Phase 4A** — AI Auto-Screening: Criteria Manager, Groq pipeline, three-queue review, methodology export
-- [ ] **Phase 4B** — PDF Knowledge Extraction: upload → pdf-parse → Groq → Evidence Matrix, Gap Analysis
-- [ ] **Phase 5** — Deploy (Railway + Netlify), Docker compose, documentation
+- [x] **Phase 4A** — AI Auto-Screening: Criteria Manager, Groq pipeline, three-queue review, methodology export
+- [x] **Phase 4B** — PDF Knowledge Extraction: upload → pdf-parse → Groq → Evidence Matrix, Gap Analysis
+- [x] **Phase 5** — Deploy (Railway + Netlify), Docker compose, documentation
+- [ ] **Phase 6** — RAG: pgvector on Neon + HuggingFace embeddings + semantic chunk retrieval in AI assistant (see `RAG_IMPLEMENTATION_PLAN.md`)
 
 ---
 
@@ -374,7 +410,7 @@ client/src/services/
 
 ## Environment Setup (First Time)
 
-1. `cp .env.example .env` and fill in `JWT_SECRET` and `ANTHROPIC_API_KEY`.
+1. `cp .env.example .env` and fill in `JWT_SECRET`, `GROQ_API_KEY`, and optionally `HF_API_KEY` (for RAG).
 2. `docker compose up db -d` to start Postgres.
 3. `cd server && npm install && npx prisma migrate dev --name init`.
 4. `cd client && npm install`.

@@ -96,7 +96,7 @@ export default function CriteriaManager() {
         <button
           onClick={handleRun}
           disabled={running || locked || criteria.length === 0}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+          className="px-4 py-2 bg-[#002868] hover:bg-[#001f52] disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
         >
           {running ? 'Starting…' : locked ? 'Screening run' : `Run Auto-Screening (${criteria.length} criteria)`}
         </button>
@@ -181,12 +181,12 @@ export default function CriteriaManager() {
                 placeholder={type === 'INCLUSION'
                   ? 'e.g. Study must involve machine learning methods'
                   : 'e.g. Survey or review papers (not primary research)'}
-                className="flex-1 bg-[#F8FAFC] border border-[#E4E7EF] focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                className="flex-1 bg-[#F8FAFC] border border-[#E4E7EF] focus:border-[#C8A951]/50 focus:ring-2 focus:ring-[#C8A951]/20 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
               />
               <button
                 type="submit"
                 disabled={!description.trim() || saving}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="px-4 py-2 bg-[#002868] hover:bg-[#001f52] disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 Add
               </button>

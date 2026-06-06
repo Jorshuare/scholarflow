@@ -4,6 +4,7 @@ import LoginForm        from '../features/auth/LoginForm';
 import RegisterForm     from '../features/auth/RegisterForm';
 import ProjectList      from '../features/projects/ProjectList';
 import ProjectDashboard from '../pages/ProjectDashboard';
+import ProjectHome      from '../pages/ProjectHome';
 import PaperTable       from '../features/library/PaperTable';
 import ScreeningCard    from '../features/screening/ScreeningCard';
 import PRISMADiagram          from '../features/prisma-diagram/PRISMADiagram';
@@ -35,7 +36,8 @@ export default function AppRouter() {
         <Route path="/projects" element={<ProtectedRoute><ProjectList /></ProtectedRoute>} />
 
         <Route path="/projects/:id" element={<ProtectedRoute><ProjectDashboard /></ProtectedRoute>}>
-          <Route index              element={<Navigate to="library" replace />} />
+          <Route index              element={<Navigate to="home" replace />} />
+          <Route path="home"        element={<ProjectHome />} />
           <Route path="library"     element={<PaperTable />} />
           <Route path="screening"             element={<ScreeningCard />} />
           <Route path="screening/progress"    element={<AutoScreeningProgress />} />

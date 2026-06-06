@@ -30,11 +30,11 @@ export default function RegisterForm() {
     <div className="min-h-screen flex items-center justify-center bg-[#F0F2F8]">
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-2xl shadow-lg border border-[#E4E7EF] overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+          <div className="h-1.5 bg-gradient-to-r from-[#002868] to-[#C8A951]" />
 
           <div className="px-8 py-8">
             <div className="mb-7">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-[#002868] to-[#C8A951] bg-clip-text text-transparent">
                 ScholarFlow
               </h1>
               <p className="text-sm text-gray-500 mt-1">Create your account</p>
@@ -49,7 +49,7 @@ export default function RegisterForm() {
                   onChange={e => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C8A951] focus:ring-2 focus:ring-[#C8A951]/20 transition-all"
                 />
               </div>
 
@@ -62,7 +62,7 @@ export default function RegisterForm() {
                   required
                   minLength={8}
                   placeholder="••••••••"
-                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C8A951] focus:ring-2 focus:ring-[#C8A951]/20 transition-all"
                 />
               </div>
 
@@ -73,7 +73,7 @@ export default function RegisterForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition-colors mt-2"
+                className="w-full bg-[#002868] hover:bg-[#001f52] disabled:opacity-50 text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition-colors mt-2"
               >
                 {loading ? 'Creating account…' : 'Create account'}
               </button>
@@ -81,7 +81,7 @@ export default function RegisterForm() {
 
             <p className="text-xs text-gray-500 mt-6 text-center">
               Already have an account?{' '}
-              <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors">
+              <Link to="/login" className="text-[#002868] hover:text-[#001f52] font-semibold transition-colors">
                 Sign in
               </Link>
             </p>

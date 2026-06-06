@@ -83,7 +83,7 @@ export default function TagsManager() {
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Machine Learning, RCT, Systematic Review…"
                 maxLength={40}
-                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] focus:border-[#C8A951]/50 focus:ring-2 focus:ring-[#C8A951]/20 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
               />
             </div>
 
@@ -117,7 +117,7 @@ export default function TagsManager() {
             <button
               type="submit"
               disabled={!name.trim() || saving}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+              className="px-4 py-2 bg-[#002868] hover:bg-[#001f52] disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
             >
               {saving ? 'Creating…' : 'Create tag'}
             </button>

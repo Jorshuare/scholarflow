@@ -41,8 +41,8 @@ export default function AutoScreeningProgress() {
             ) : job.status === 'FAILED' ? (
               <div className="w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-3 text-2xl">✗</div>
             ) : (
-              <div className="w-14 h-14 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center mx-auto mb-3">
-                <span className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-14 h-14 rounded-full bg-[#002868]/5 border border-[#002868]/20 flex items-center justify-center mx-auto mb-3">
+                <span className="w-6 h-6 border-2 border-[#002868] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             <p className="text-base font-bold text-gray-800">
@@ -63,7 +63,7 @@ export default function AutoScreeningProgress() {
             </div>
             <div className="h-2.5 bg-[#F0F2F8] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#002868] to-[#C8A951] rounded-full transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -87,7 +87,7 @@ export default function AutoScreeningProgress() {
           {job.status === 'COMPLETE' && (
             <button
               onClick={() => navigate(`/projects/${projectId}/screening/results`)}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+              className="w-full py-2.5 bg-[#002868] hover:bg-[#001f52] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
             >
               View Results →
             </button>

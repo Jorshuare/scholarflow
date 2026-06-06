@@ -84,7 +84,7 @@ export default function FullTextQueue() {
                 onClick={() => setSelected(p)}
                 className={`w-full text-left px-4 py-3 border-b border-[#F0F2F8] transition-colors ${
                   selected?.id === p.id
-                    ? 'bg-indigo-50 border-l-2 border-l-indigo-500 pl-3.5'
+                    ? 'bg-[#002868]/5 border-l-2 border-l-[#C8A951] pl-3.5'
                     : 'hover:bg-[#F8FAFC]'
                 }`}
               >
@@ -113,7 +113,7 @@ export default function FullTextQueue() {
         ) : (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center mx-auto mb-4 text-3xl">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#002868]/5 to-[#002868]/10 border border-[#C8A951]/20 flex items-center justify-center mx-auto mb-4 text-3xl">
                 📄
               </div>
               <p className="text-sm font-semibold text-gray-700">Select a paper</p>

@@ -28,7 +28,7 @@ export default function NewProjectModal({ onClose, onCreated }) {
         className="bg-white rounded-2xl shadow-xl border border-[#E4E7EF] w-full max-w-md overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+        <div className="h-1 bg-gradient-to-r from-[#002868] to-[#C8A951]" />
         <div className="p-6">
           <h2 className="text-sm font-bold text-gray-800 mb-4">New review project</h2>
 
@@ -42,7 +42,7 @@ export default function NewProjectModal({ onClose, onCreated }) {
                 required
                 autoFocus
                 placeholder="e.g. ML for autonomous vehicles"
-                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C8A951] focus:ring-2 focus:ring-[#C8A951]/20 transition-all"
               />
             </div>
 
@@ -55,7 +55,7 @@ export default function NewProjectModal({ onClose, onCreated }) {
                 onChange={e => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Brief description of the review topic…"
-                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+                className="w-full bg-[#F8FAFC] border border-[#E4E7EF] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C8A951] focus:ring-2 focus:ring-[#C8A951]/20 transition-all resize-none"
               />
             </div>
 
@@ -74,7 +74,7 @@ export default function NewProjectModal({ onClose, onCreated }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="px-4 py-2 bg-[#002868] hover:bg-[#001f52] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 {loading ? 'Creating…' : 'Create project'}
               </button>

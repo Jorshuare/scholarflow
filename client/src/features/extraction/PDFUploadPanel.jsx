@@ -31,12 +31,12 @@ function EditField({ label, value, onSave }) {
           onChange={e => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={e => { if (e.key === 'Escape') { setEditing(false); setDraft(value || ''); } }}
-          className="w-full text-xs text-gray-800 bg-white border border-indigo-300 rounded-md px-2 py-1 outline-none resize-none focus:ring-2 focus:ring-indigo-100"
+          className="w-full text-xs text-gray-800 bg-white border border-[#C8A951]/50 rounded-md px-2 py-1 outline-none resize-none focus:ring-2 focus:ring-[#C8A951]/20"
         />
       ) : (
         <div
           onClick={() => setEditing(true)}
-          className="text-xs text-gray-700 cursor-text min-h-[1.5rem] hover:text-indigo-600 transition-colors"
+          className="text-xs text-gray-700 cursor-text min-h-[1.5rem] hover:text-[#002868] transition-colors"
         >
           {value || <span className="text-gray-300 italic">Click to fill</span>}
         </div>
@@ -115,8 +115,8 @@ export default function PDFUploadPanel({ projectId, paper, onExtracted }) {
         onClick={() => !uploading && fileRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all select-none ${
           dragging
-            ? 'border-indigo-400 bg-indigo-50'
-            : 'border-[#E4E7EF] hover:border-indigo-300 hover:bg-indigo-50/40 bg-[#F8FAFC]'
+            ? 'border-[#C8A951] bg-[#002868]/5'
+            : 'border-[#E4E7EF] hover:border-[#C8A951]/50 hover:bg-[#002868]/5/40 bg-[#F8FAFC]'
         } ${uploading ? 'opacity-60 cursor-wait pointer-events-none' : ''}`}
       >
         <input
@@ -128,8 +128,8 @@ export default function PDFUploadPanel({ projectId, paper, onExtracted }) {
         />
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-            <p className="text-xs text-indigo-600 font-semibold">Extracting with AI…</p>
+            <div className="w-8 h-8 border-2 border-[#002868]/20 border-t-[#002868] rounded-full animate-spin" />
+            <p className="text-xs text-[#002868] font-semibold">Extracting with AI…</p>
           </div>
         ) : (
           <>

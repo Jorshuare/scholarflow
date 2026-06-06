@@ -75,7 +75,7 @@ export default function ScreeningCard() {
         </div>
         <div className="h-1.5 bg-[#E4E7EF] rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300 rounded-full"
+            className="h-full bg-gradient-to-r from-[#002868] to-[#C8A951] transition-all duration-300 rounded-full"
             style={{ width: `${done ? 100 : progress}%` }}
           />
         </div>

@@ -44,10 +44,17 @@ const Icon = {
   ),
 };
 
+const HomeIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 shrink-0">
+    <path d="M2 7L8 2l6 5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M3.5 6.5V13.5h3.5V10h2v3.5h3.5V6.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const NAV = [
   {
     label: 'LIBRARY',
-    color: '#6366f1',
+    color: '#C8A951',
     links: [
       { to: 'library',             text: 'Papers',         Icon: Icon.Papers    },
       { to: 'screening',           text: 'Manual Screen',  Icon: Icon.Screening },
@@ -58,7 +65,7 @@ const NAV = [
   },
   {
     label: 'ANALYSE',
-    color: '#10b981',
+    color: '#C8A951',
     links: [
       { to: 'prisma',          text: 'PRISMA',          Icon: Icon.Prisma     },
       { to: 'full-text-queue', text: 'Full-Text Queue', Icon: Icon.Papers     },
@@ -73,24 +80,45 @@ export default function Sidebar({ projectName, projectId }) {
   const navigate = useNavigate();
 
   return (
-    <aside className="w-56 shrink-0 h-screen sticky top-0 bg-[#0F1117] border-r border-[#2A2D3A] flex flex-col">
+    <aside className="w-56 shrink-0 h-screen sticky top-0 bg-[#002868] border-r border-[#003580] flex flex-col">
       {/* Logo + back */}
-      <div className="px-4 py-4 border-b border-[#2A2D3A]">
+      <div className="px-4 py-4 border-b border-[#003580]">
         <button
           onClick={() => navigate('/projects')}
-          className="text-[10px] text-[#7B7F96] hover:text-[#F0F2F8] transition-colors mb-2 block"
+          className="text-[10px] text-[#7BA3CC] hover:text-white transition-colors mb-2 block"
         >
           ← All reviews
         </button>
-        {/* Gradient logo */}
-        <p className="text-sm font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent leading-none mb-1">
+        <p className="text-sm font-bold text-[#C8A951] leading-none mb-1 tracking-wide">
           ScholarFlow
         </p>
-        <p className="text-xs text-[#F0F2F8] font-medium truncate leading-snug">{projectName}</p>
+        <p className="text-xs text-white/80 font-medium truncate leading-snug">{projectName}</p>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-2 py-3 space-y-4 overflow-y-auto">
+        {/* Overview link */}
+        <NavLink
+          to={`/projects/${projectId}/home`}
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all duration-150 ${
+              isActive
+                ? 'bg-[#003580] text-white font-medium'
+                : 'text-[#7BA3CC] hover:text-white hover:bg-[#003070]'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <span style={isActive ? { color: '#C8A951' } : {}}>
+                <HomeIcon />
+              </span>
+              <span>Overview</span>
+              {isActive && <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951]" />}
+            </>
+          )}
+        </NavLink>
+        <div className="border-t border-[#003580] mx-1" />
         {NAV.map(section => (
           <div key={section.label}>
             <p
@@ -106,8 +134,8 @@ export default function Sidebar({ projectName, projectId }) {
                 className={({ isActive }) =>
                   `flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all duration-150 ${
                     isActive
-                      ? 'bg-[#1E2130] text-[#F0F2F8] font-medium'
-                      : 'text-[#7B7F96] hover:text-[#C0C3D4] hover:bg-[#181B25]'
+                      ? 'bg-[#003580] text-white font-medium'
+                      : 'text-[#7BA3CC] hover:text-white hover:bg-[#003070]'
                   }`
                 }
               >
@@ -115,16 +143,13 @@ export default function Sidebar({ projectName, projectId }) {
                   <>
                     <span
                       className="transition-colors"
-                      style={isActive ? { color: section.color } : {}}
+                      style={isActive ? { color: '#C8A951' } : {}}
                     >
                       <link.Icon />
                     </span>
                     <span>{link.text}</span>
                     {isActive && (
-                      <span
-                        className="ml-auto w-1 h-1 rounded-full"
-                        style={{ backgroundColor: section.color }}
-                      />
+                      <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951]" />
                     )}
                   </>
                 )}
@@ -135,10 +160,10 @@ export default function Sidebar({ projectName, projectId }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#2A2D3A]">
+      <div className="px-4 py-3 border-t border-[#003580]">
         <button
           onClick={() => { logout(); navigate('/login'); }}
-          className="text-xs text-[#7B7F96] hover:text-red-400 transition-colors"
+          className="text-xs text-[#7BA3CC] hover:text-red-400 transition-colors"
         >
           Sign out
         </button>

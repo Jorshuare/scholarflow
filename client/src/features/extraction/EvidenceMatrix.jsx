@@ -30,7 +30,7 @@ function EditableCell({ value, onSave }) {
       <div
         onClick={() => setEditing(true)}
         title="Click to edit"
-        className="cursor-text min-h-[1.25rem] text-xs text-gray-700 hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors border border-transparent hover:border-indigo-100"
+        className="cursor-text min-h-[1.25rem] text-xs text-gray-700 hover:bg-[#002868]/5 rounded px-1 py-0.5 transition-colors border border-transparent hover:border-[#C8A951]/20"
       >
         {value || <span className="text-gray-300 italic">—</span>}
       </div>
@@ -45,7 +45,7 @@ function EditableCell({ value, onSave }) {
       onChange={e => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={e => { if (e.key === 'Escape') { setEditing(false); setDraft(value || ''); } }}
-      className="w-full bg-white border border-indigo-300 rounded-lg px-1.5 py-1 text-xs text-gray-800 outline-none resize-none focus:ring-2 focus:ring-indigo-100"
+      className="w-full bg-white border border-[#C8A951]/50 rounded-lg px-1.5 py-1 text-xs text-gray-800 outline-none resize-none focus:ring-2 focus:ring-[#C8A951]/20"
     />
   );
 }
@@ -147,7 +147,7 @@ export default function EvidenceMatrix() {
                         type="checkbox"
                         checked={visible.includes(c.key)}
                         onChange={() => toggleCol(c.key)}
-                        className="accent-indigo-500"
+                        className="accent-[#002868]"
                       />
                       <span className="text-xs text-gray-700">{c.label}</span>
                     </label>
@@ -160,7 +160,7 @@ export default function EvidenceMatrix() {
           <button
             onClick={handleExportCsv}
             disabled={exporting}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+            className="px-3 py-1.5 bg-[#002868] hover:bg-[#001f52] disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
           >
             {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
@@ -171,7 +171,7 @@ export default function EvidenceMatrix() {
       {displayed.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-center p-8 bg-white">
           <div>
-            <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-3 text-xl">🔬</div>
+            <div className="w-12 h-12 rounded-full bg-[#002868]/5 border border-[#C8A951]/20 flex items-center justify-center mx-auto mb-3 text-xl">🔬</div>
             <p className="text-sm font-semibold text-gray-700">
               {filter !== 'all' ? 'No papers match this filter' : 'No included papers yet'}
             </p>

@@ -5,6 +5,11 @@
   --color-surface: #F0F2F8;
   --color-panel:   #FFFFFF;
   --color-border:  #E4E7EF;
+  /* Beihang palette */
+  --bh-blue:       #002868;
+  --bh-blue-dark:  #001f52;
+  --bh-blue-mid:   #003580;
+  --bh-gold:       #C8A951;
 }
 
 body {

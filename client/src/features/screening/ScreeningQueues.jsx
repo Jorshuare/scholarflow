@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getResults, confirmDecisions, overrideDecision, getMethodology } from '../../services/autoScreening.service';
-import { screenPaper } from '../../services/screening.service';
 
 function ConfidenceBar({ value, color }) {
   return (
@@ -17,29 +16,22 @@ function ConfidenceBar({ value, color }) {
 function AIBanner({ result }) {
   const isInclude = result.recommendation === 'INCLUDE';
   const isExclude = result.recommendation === 'EXCLUDE';
-  const color = isInclude ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-               : isExclude ? 'bg-red-50 border-red-200 text-red-600'
-               : 'bg-amber-50 border-amber-200 text-amber-700';
-  const barColor = isInclude ? '#10b981' : isExclude ? '#ef4444' : '#f59e0b';
-
+  const color    = isInclude ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                 : isExclude ? 'bg-red-50 border-red-200 text-red-600'
+                 : 'bg-amber-50 border-amber-200 text-amber-700';
+  const barColor  = isInclude ? '#10b981' : isExclude ? '#ef4444' : '#f59e0b';
   return (
     <div className={`border rounded-lg px-3 py-2 mb-3 ${color}`}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-bold">AI: {result.recommendation} · {result.confidence}% confident</p>
-        {result.matchedInclusion?.length > 0 && (
-          <div className="flex gap-1">
-            {result.matchedInclusion.map(c => (
-              <span key={c} className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">{c}</span>
-            ))}
-          </div>
-        )}
-        {result.triggeredExclusion?.length > 0 && (
-          <div className="flex gap-1">
-            {result.triggeredExclusion.map(c => (
-              <span key={c} className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">{c}</span>
-            ))}
-          </div>
-        )}
+        <div className="flex gap-1">
+          {result.matchedInclusion?.map(c => (
+            <span key={c} className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">{c}</span>
+          ))}
+          {result.triggeredExclusion?.map(c => (
+            <span key={c} className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">{c}</span>
+          ))}
+        </div>
       </div>
       <ConfidenceBar value={result.confidence} color={barColor} />
       <p className="text-[10px] mt-1 opacity-75">{result.reasoning}</p>
@@ -47,40 +39,159 @@ function AIBanner({ result }) {
   );
 }
 
-function PaperCard({ result, compact = false }) {
-  const p = result.paper;
+// ── Auto-Included queue with per-paper checkboxes ─────────────────────────────
+function IncludedQueue({ results, projectId, confirmed, onConfirmed, onConfirming }) {
+  const [checkedIds, setCheckedIds] = useState(new Set());
+  const allChecked  = results.length > 0 && results.every(r => checkedIds.has(r.paperId));
+  const someChecked = checkedIds.size > 0 && !allChecked;
+
+  function toggleCheck(id) {
+    setCheckedIds(prev => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }
+
+  function toggleAll() {
+    setCheckedIds(allChecked ? new Set() : new Set(results.map(r => r.paperId)));
+  }
+
+  async function handleConfirm(ids) {
+    onConfirming(true);
+    const decisions = [...ids].map(id => ({ paperId: id, finalDecision: 'INCLUDE' }));
+    try {
+      await confirmDecisions(projectId, decisions);
+      onConfirmed();
+    } finally {
+      onConfirming(false);
+    }
+  }
+
   return (
-    <div className="bg-white border border-[#E4E7EF] rounded-xl p-3 mb-2">
-      {!compact && <AIBanner result={result} />}
-      <p className="text-xs font-semibold text-gray-800 leading-snug">{p.title}</p>
-      {p.authors && <p className="text-[10px] text-gray-400 mt-0.5 truncate">{p.authors}</p>}
-      <div className="flex gap-2 mt-0.5">
-        {p.year  && <span className="text-[10px] text-gray-400">{p.year}</span>}
-        {p.venue && <span className="text-[10px] text-gray-400 truncate max-w-[140px]">{p.venue}</span>}
-      </div>
-      {compact && (
-        <div className="mt-1.5">
-          <ConfidenceBar
-            value={result.confidence}
-            color={result.recommendation === 'INCLUDE' ? '#10b981' : '#ef4444'}
-          />
-          <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{result.reasoning}</p>
+    <div className="flex-1 flex flex-col border-r border-[#E4E7EF] bg-white min-w-0">
+      {/* Column header */}
+      <div className="px-4 py-3 border-b border-[#E4E7EF] bg-emerald-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-emerald-700">Auto-Included</p>
+            <p className="text-[10px] text-emerald-600">{results.length} papers · high confidence</p>
+          </div>
+          {confirmed ? (
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Confirmed</span>
+          ) : results.length > 0 && (
+            <div className="flex flex-col items-end gap-1">
+              {checkedIds.size > 0 ? (
+                <button
+                  onClick={() => handleConfirm(checkedIds)}
+                  className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg transition-colors"
+                >
+                  Confirm {checkedIds.size} selected
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleConfirm(new Set(results.map(r => r.paperId)))}
+                  className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg transition-colors"
+                >
+                  Confirm All ({results.length})
+                </button>
+              )}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Select-all row */}
+        {results.length > 0 && !confirmed && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-100">
+            <input
+              type="checkbox"
+              checked={allChecked}
+              ref={el => { if (el) el.indeterminate = someChecked; }}
+              onChange={toggleAll}
+              className="w-3 h-3 accent-emerald-600 cursor-pointer"
+            />
+            <span className="text-[10px] text-emerald-700 font-medium">
+              {checkedIds.size === 0 ? 'Select papers to confirm individually' : `${checkedIds.size} selected`}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        {results.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center mt-4">No papers here</p>
+        ) : (
+          results.map(r => (
+            <div
+              key={r.id}
+              className={`bg-white border rounded-xl p-3 mb-2 transition-colors ${
+                checkedIds.has(r.paperId) ? 'border-emerald-300 bg-emerald-50/40' : 'border-[#E4E7EF]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                {!confirmed && (
+                  <input
+                    type="checkbox"
+                    checked={checkedIds.has(r.paperId)}
+                    onChange={() => toggleCheck(r.paperId)}
+                    className="w-3 h-3 mt-0.5 accent-emerald-600 cursor-pointer shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-800 leading-snug">{r.paper.title}</p>
+                  {r.paper.authors && (
+                    <p className="text-[10px] text-gray-400 mt-0.5 truncate">{r.paper.authors}</p>
+                  )}
+                  <div className="flex gap-2 mt-0.5">
+                    {r.paper.year  && <span className="text-[10px] text-gray-400">{r.paper.year}</span>}
+                    {r.paper.venue && <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{r.paper.venue}</span>}
+                  </div>
+                  <ConfidenceBar value={r.confidence} color="#10b981" />
+                  <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{r.reasoning}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
+// ── Needs Review queue with exclusion reason prompt ───────────────────────────
+const QUICK_REASONS = [
+  'Out of scope',
+  'Wrong study design',
+  'Wrong population',
+  'Full text not available',
+  'Not peer-reviewed',
+  'Duplicate',
+];
+
 function UncertainQueue({ results, projectId, onDone }) {
-  const [index, setIndex] = useState(0);
-  const [saving, setSaving] = useState(false);
+  const [index, setIndex]           = useState(0);
+  const [saving, setSaving]         = useState(false);
+  const [showExcludeForm, setShowExcludeForm] = useState(false);
+  const [excludeReason, setExcludeReason]     = useState('');
 
   const item = results[index];
 
-  async function decide(decision) {
+  function openExclude() {
+    setExcludeReason('');
+    setShowExcludeForm(true);
+  }
+
+  function cancelExclude() {
+    setShowExcludeForm(false);
+    setExcludeReason('');
+  }
+
+  async function decide(decision, reason) {
     setSaving(true);
     try {
-      await overrideDecision(projectId, item.paperId, decision);
+      await overrideDecision(projectId, item.paperId, decision, reason || null);
+      setShowExcludeForm(false);
+      setExcludeReason('');
       if (index + 1 >= results.length) onDone();
       else setIndex(i => i + 1);
     } finally {
@@ -98,8 +209,12 @@ function UncertainQueue({ results, projectId, onDone }) {
     <div>
       <p className="text-xs text-gray-400 mb-3">{index + 1} of {results.length}</p>
       <div className="h-1.5 bg-[#E4E7EF] rounded-full mb-4 overflow-hidden">
-        <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${((index) / results.length) * 100}%` }} />
+        <div
+          className="h-full bg-amber-400 rounded-full transition-all"
+          style={{ width: `${(index / results.length) * 100}%` }}
+        />
       </div>
+
       <div className="bg-white border border-[#E4E7EF] rounded-xl p-4 mb-3">
         <AIBanner result={item} />
         <p className="text-sm font-semibold text-gray-800 leading-snug">{item.paper.title}</p>
@@ -108,23 +223,134 @@ function UncertainQueue({ results, projectId, onDone }) {
           <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-4">{item.paper.abstract}</p>
         )}
       </div>
-      <div className="flex gap-2">
-        <button onClick={() => decide('INCLUDE')} disabled={saving}
-          className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-          Include
-        </button>
-        <button onClick={() => decide('EXCLUDE')} disabled={saving}
-          className="flex-1 py-2 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-          Exclude
-        </button>
+
+      {showExcludeForm ? (
+        /* Exclusion reason form */
+        <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-3">
+          <p className="text-xs font-bold text-red-700">Exclusion reason</p>
+
+          {/* Quick-pick chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_REASONS.map(r => (
+              <button
+                key={r}
+                onClick={() => setExcludeReason(r)}
+                className={`text-[10px] font-semibold px-2 py-1 rounded-full border transition-all ${
+                  excludeReason === r
+                    ? 'bg-red-500 text-white border-red-500'
+                    : 'bg-white text-red-600 border-red-200 hover:border-red-400'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <input
+            type="text"
+            value={excludeReason}
+            onChange={e => setExcludeReason(e.target.value)}
+            placeholder="Or type a custom reason…"
+            className="w-full bg-white border border-red-200 rounded-lg px-3 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-400 transition-all"
+            autoFocus
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => decide('EXCLUDE', excludeReason)}
+              disabled={saving}
+              className="flex-1 py-2 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              {saving ? 'Saving…' : 'Confirm Exclude'}
+            </button>
+            <button
+              onClick={cancelExclude}
+              className="flex-1 py-2 bg-white border border-[#E4E7EF] hover:bg-[#F0F2F8] text-gray-600 text-xs font-semibold rounded-lg transition-colors"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={() => decide('INCLUDE')}
+            disabled={saving}
+            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            Include
+          </button>
+          <button
+            onClick={openExclude}
+            disabled={saving}
+            className="flex-1 py-2 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            Exclude
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Auto-Excluded queue ───────────────────────────────────────────────────────
+function ExcludedQueue({ results, projectId, confirmed, onConfirmed, onConfirming }) {
+  async function handleConfirmAll() {
+    onConfirming(true);
+    const decisions = results.map(r => ({ paperId: r.paperId, finalDecision: 'EXCLUDE' }));
+    try {
+      await confirmDecisions(projectId, decisions);
+      onConfirmed();
+    } finally {
+      onConfirming(false);
+    }
+  }
+
+  return (
+    <div className="flex-1 flex flex-col bg-white min-w-0">
+      <div className="px-4 py-3 border-b border-[#E4E7EF] bg-red-50 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-bold text-red-600">Auto-Excluded</p>
+          <p className="text-[10px] text-red-500">{results.length} papers · high confidence</p>
+        </div>
+        {confirmed ? (
+          <span className="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">Confirmed</span>
+        ) : results.length > 0 && (
+          <button
+            onClick={handleConfirmAll}
+            className="px-2.5 py-1 bg-red-500 hover:bg-red-400 text-white text-[10px] font-bold rounded-lg transition-colors"
+          >
+            Confirm All ({results.length})
+          </button>
+        )}
+      </div>
+      <div className="flex-1 overflow-y-auto p-3">
+        {results.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center mt-4">No papers here</p>
+        ) : (
+          results.map(r => (
+            <div key={r.id} className="bg-white border border-[#E4E7EF] rounded-xl p-3 mb-2">
+              <p className="text-xs font-semibold text-gray-800 leading-snug">{r.paper.title}</p>
+              {r.paper.authors && (
+                <p className="text-[10px] text-gray-400 mt-0.5 truncate">{r.paper.authors}</p>
+              )}
+              <div className="flex gap-2 mt-0.5">
+                {r.paper.year  && <span className="text-[10px] text-gray-400">{r.paper.year}</span>}
+                {r.paper.venue && <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{r.paper.venue}</span>}
+              </div>
+              <ConfidenceBar value={r.confidence} color="#ef4444" />
+              <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{r.reasoning}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
+// ── Root component ────────────────────────────────────────────────────────────
 export default function ScreeningQueues() {
   const { id: projectId } = useParams();
-  const navigate = useNavigate();
 
   const [included,  setIncluded]  = useState([]);
   const [excluded,  setExcluded]  = useState([]);
@@ -133,7 +359,7 @@ export default function ScreeningQueues() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState({ included: false, excluded: false });
   const [methodology, setMethodology] = useState('');
-  const [showReport, setShowReport] = useState(false);
+  const [showReport, setShowReport]   = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -146,20 +372,6 @@ export default function ScreeningQueues() {
       setUncertain(unc);
     }).finally(() => setLoading(false));
   }, [projectId]);
-
-  async function bulkConfirm(queue) {
-    setConfirming(true);
-    const decisions = (queue === 'included' ? included : excluded).map(r => ({
-      paperId: r.paperId,
-      finalDecision: queue === 'included' ? 'INCLUDE' : 'EXCLUDE',
-    }));
-    try {
-      await confirmDecisions(projectId, decisions);
-      setConfirmed(prev => ({ ...prev, [queue]: true }));
-    } finally {
-      setConfirming(false);
-    }
-  }
 
   async function loadMethodology() {
     const text = await getMethodology(projectId);
@@ -176,9 +388,9 @@ export default function ScreeningQueues() {
         <div>
           <h1 className="text-sm font-bold text-gray-800">Auto-Screening Results</h1>
           <div className="flex gap-4 mt-1">
-            <span className="text-xs font-semibold text-emerald-600">{included.length} included</span>
+            <span className="text-xs font-semibold text-emerald-600">{included.length} auto-included</span>
             <span className="text-xs font-semibold text-amber-600">{uncertain.length} needs review</span>
-            <span className="text-xs font-semibold text-red-500">{excluded.length} excluded</span>
+            <span className="text-xs font-semibold text-red-500">{excluded.length} auto-excluded</span>
           </div>
         </div>
         <button
@@ -191,39 +403,18 @@ export default function ScreeningQueues() {
 
       {/* Three columns */}
       <div className="flex-1 overflow-hidden flex">
-
-        {/* Auto-Included */}
-        <div className="flex-1 flex flex-col border-r border-[#E4E7EF] bg-white">
-          <div className="px-4 py-3 border-b border-[#E4E7EF] bg-emerald-50 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-emerald-700">✓ Auto-Included</p>
-              <p className="text-[10px] text-emerald-600">{included.length} papers · high confidence</p>
-            </div>
-            {!confirmed.included && included.length > 0 && (
-              <button
-                onClick={() => bulkConfirm('included')}
-                disabled={confirming}
-                className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-[10px] font-bold rounded-lg transition-colors"
-              >
-                Confirm All
-              </button>
-            )}
-            {confirmed.included && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">✓ Confirmed</span>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            {included.length === 0
-              ? <p className="text-xs text-gray-400 text-center mt-4">No papers here</p>
-              : included.map(r => <PaperCard key={r.id} result={r} compact />)
-            }
-          </div>
-        </div>
+        <IncludedQueue
+          results={included}
+          projectId={projectId}
+          confirmed={confirmed.included}
+          onConfirmed={() => setConfirmed(p => ({ ...p, included: true }))}
+          onConfirming={setConfirming}
+        />
 
         {/* Needs Review */}
-        <div className="flex-1 flex flex-col border-r border-[#E4E7EF] bg-white">
+        <div className="flex-1 flex flex-col border-r border-[#E4E7EF] bg-white min-w-0">
           <div className="px-4 py-3 border-b border-[#E4E7EF] bg-amber-50">
-            <p className="text-xs font-bold text-amber-700">⚠ Needs Review</p>
+            <p className="text-xs font-bold text-amber-700">Needs Review</p>
             <p className="text-[10px] text-amber-600">{uncertain.length} papers · uncertain signals</p>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
@@ -234,53 +425,36 @@ export default function ScreeningQueues() {
           </div>
         </div>
 
-        {/* Auto-Excluded */}
-        <div className="flex-1 flex flex-col bg-white">
-          <div className="px-4 py-3 border-b border-[#E4E7EF] bg-red-50 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-red-600">✗ Auto-Excluded</p>
-              <p className="text-[10px] text-red-500">{excluded.length} papers · high confidence</p>
-            </div>
-            {!confirmed.excluded && excluded.length > 0 && (
-              <button
-                onClick={() => bulkConfirm('excluded')}
-                disabled={confirming}
-                className="px-2.5 py-1 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white text-[10px] font-bold rounded-lg transition-colors"
-              >
-                Confirm All
-              </button>
-            )}
-            {confirmed.excluded && (
-              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">✓ Confirmed</span>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            {excluded.length === 0
-              ? <p className="text-xs text-gray-400 text-center mt-4">No papers here</p>
-              : excluded.map(r => <PaperCard key={r.id} result={r} compact />)
-            }
-          </div>
-        </div>
+        <ExcludedQueue
+          results={excluded}
+          projectId={projectId}
+          confirmed={confirmed.excluded}
+          onConfirmed={() => setConfirmed(p => ({ ...p, excluded: true }))}
+          onConfirming={setConfirming}
+        />
       </div>
 
-      {/* Methodology report modal */}
+      {/* Methodology modal */}
       {showReport && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowReport(false)}>
           <div className="bg-white border border-[#E4E7EF] rounded-2xl shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-            <div className="h-1 bg-gradient-to-r from-indigo-500 to-violet-500 -mx-6 -mt-6 mb-5 rounded-t-2xl" />
+            <div className="h-1 bg-gradient-to-r from-[#002868] to-[#C8A951] -mx-6 -mt-6 mb-5 rounded-t-2xl" />
             <h2 className="text-sm font-bold text-gray-800 mb-3">Methodology Export</h2>
             <p className="text-xs text-gray-500 mb-3">Paste this into your paper's Methods section:</p>
-            <div className="bg-[#F8FAFC] border border-[#E4E7EF] rounded-xl p-4 text-xs text-gray-700 leading-relaxed">
+            <div className="bg-[#F8FAFC] border border-[#E4E7EF] rounded-xl p-4 text-xs text-gray-700 leading-relaxed max-h-60 overflow-y-auto">
               {methodology}
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button
-                onClick={() => { navigator.clipboard.writeText(methodology); }}
+                onClick={() => navigator.clipboard.writeText(methodology)}
                 className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E4E7EF] hover:bg-[#F0F2F8] text-gray-600 text-xs font-semibold rounded-lg transition-colors"
               >
                 Copy
               </button>
-              <button onClick={() => setShowReport(false)} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
+              <button
+                onClick={() => setShowReport(false)}
+                className="px-4 py-1.5 bg-[#002868] hover:bg-[#001f52] text-white text-xs font-semibold rounded-lg transition-colors"
+              >
                 Done
               </button>
             </div>

@@ -28,7 +28,7 @@ export default function ImportModal({ projectId, onClose, onImported }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white border border-[#E4E7EF] rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+        <div className="h-1 bg-gradient-to-r from-[#002868] to-[#C8A951]" />
         <div className="p-6">
           <h2 className="text-sm font-bold text-gray-800 mb-4">Import papers</h2>
 
@@ -54,13 +54,13 @@ export default function ImportModal({ projectId, onClose, onImported }) {
             onClick={() => inputRef.current.click()}
             className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
               file
-                ? 'border-indigo-300 bg-indigo-50'
-                : 'border-[#E4E7EF] hover:border-indigo-300 hover:bg-[#F8FAFC]'
+                ? 'border-[#C8A951]/50 bg-[#002868]/5'
+                : 'border-[#E4E7EF] hover:border-[#C8A951]/50 hover:bg-[#F8FAFC]'
             }`}
           >
             {file ? (
               <div>
-                <p className="text-sm font-semibold text-indigo-600">{file.name}</p>
+                <p className="text-sm font-semibold text-[#002868]">{file.name}</p>
                 <p className="text-xs text-gray-400 mt-1">Click to change</p>
               </div>
             ) : (
@@ -90,7 +90,7 @@ export default function ImportModal({ projectId, onClose, onImported }) {
             <button
               onClick={handleImport}
               disabled={!file || loading}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-[#002868] hover:bg-[#001f52] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
             >
               {loading ? 'Importing…' : 'Import'}
             </button>

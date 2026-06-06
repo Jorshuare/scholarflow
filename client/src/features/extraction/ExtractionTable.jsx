@@ -23,7 +23,7 @@ function EditableCell({ value, onSave }) {
     return (
       <div
         onClick={() => setEditing(true)}
-        className="cursor-text min-h-[1.25rem] text-xs text-gray-700 hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors border border-transparent hover:border-indigo-100"
+        className="cursor-text min-h-[1.25rem] text-xs text-gray-700 hover:bg-[#002868]/5 rounded px-1 py-0.5 transition-colors border border-transparent hover:border-[#C8A951]/20"
         title="Click to edit"
       >
         {value || <span className="text-gray-300 italic">—</span>}
@@ -39,7 +39,7 @@ function EditableCell({ value, onSave }) {
       onChange={e => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={e => { if (e.key === 'Escape') { setEditing(false); setDraft(value || ''); } }}
-      className="w-full bg-white border border-indigo-300 rounded-lg px-1.5 py-1 text-xs text-gray-800 outline-none resize-none focus:ring-2 focus:ring-indigo-100"
+      className="w-full bg-white border border-[#C8A951]/50 rounded-lg px-1.5 py-1 text-xs text-gray-800 outline-none resize-none focus:ring-2 focus:ring-[#C8A951]/20"
     />
   );
 }
@@ -90,7 +90,7 @@ export default function ExtractionTable() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Show columns</p>
                 {ALL_COLS.map(c => (
                   <label key={c} className="flex items-center gap-2 py-1 cursor-pointer">
-                    <input type="checkbox" checked={cols.includes(c)} onChange={() => toggleCol(c)} className="accent-indigo-500" />
+                    <input type="checkbox" checked={cols.includes(c)} onChange={() => toggleCol(c)} className="accent-[#002868]" />
                     <span className="text-xs text-gray-700 font-medium">{COL_LABELS[c]}</span>
                   </label>
                 ))}
@@ -99,7 +99,7 @@ export default function ExtractionTable() {
           )}
           <button
             onClick={() => downloadExport(projectId, 'csv')}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+            className="px-3 py-1.5 bg-[#002868] hover:bg-[#001f52] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
           >
             Export CSV
           </button>

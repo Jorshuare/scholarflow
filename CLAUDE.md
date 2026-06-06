@@ -224,10 +224,10 @@ All routes except `/api/auth/*` require `Authorization: Bearer <token>`.
 
 ## AI Integration Rules
 
-- The Anthropic API key lives **only** in `server/.env` and is accessed via `server/src/config/env.js`.
-- `ai.service.js` fetches all papers for the project, builds a structured context block (titles + abstracts + notes + status), prepends it to every user message, then calls `anthropic.messages.create(...)`.
-- The system prompt instructs Claude to only cite papers present in the context and to include paper IDs in citations so the frontend can resolve them.
-- Model: use `process.env.ANTHROPIC_MODEL` (default `claude-sonnet-4-6`). Never hard-code the model string.
+- The Groq API key lives **only** in `server/.env` and is accessed via `server/src/config/env.js`.
+- `ai.service.js` fetches all papers for the project, builds a structured context block (titles + abstracts + notes + status), prepends it to every user message, then calls the Groq chat completions API.
+- The system prompt instructs the model to only cite papers present in the context and to include paper IDs in citations so the frontend can resolve them.
+- Model: use `process.env.GROQ_MODEL` (default `llama-3.3-70b-versatile`). Never hard-code the model string.
 - Never stream AI responses in Phase 3 — simple request/response is sufficient for the deadline.
 
 ---

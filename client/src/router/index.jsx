@@ -9,6 +9,8 @@ import ScreeningCard    from '../features/screening/ScreeningCard';
 import PRISMADiagram          from '../features/prisma-diagram/PRISMADiagram';
 import ChatPanel              from '../features/ai-assistant/ChatPanel';
 import ExtractionTable        from '../features/extraction/ExtractionTable';
+import EvidenceMatrix         from '../features/extraction/EvidenceMatrix';
+import FullTextQueue          from '../features/extraction/FullTextQueue';
 import TagsManager            from '../features/tags/TagsManager';
 import CriteriaManager        from '../features/screening/CriteriaManager';
 import AutoScreeningProgress  from '../features/screening/AutoScreeningProgress';
@@ -40,9 +42,11 @@ export default function AppRouter() {
           <Route path="screening/results"     element={<ScreeningQueues />} />
           <Route path="criteria"              element={<CriteriaManager />} />
           <Route path="tags"                  element={<TagsManager />} />
-          <Route path="prisma"      element={<PRISMADiagram />} />
-          <Route path="extraction"  element={<ExtractionTable />} />
-          <Route path="ai"          element={<ChatPanel />} />
+          <Route path="prisma"          element={<PRISMADiagram />} />
+          <Route path="extraction"      element={<ExtractionTable />} />
+          <Route path="full-text-queue" element={<FullTextQueue />} />
+          <Route path="evidence-matrix" element={<EvidenceMatrix />} />
+          <Route path="ai"              element={<ChatPanel />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -67,9 +67,17 @@ export default function ChatPanel() {
   return (
     <div className="flex flex-col h-full bg-[#F0F2F8]">
       {/* Header */}
-      <div className="px-6 py-4 bg-white border-b border-[#E4E7EF]">
-        <h1 className="text-sm font-bold text-gray-800">AI Assistant</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Ask questions about your literature corpus</p>
+      <div className="px-6 py-4 bg-white border-b border-[#E4E7EF] flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-sm font-bold text-gray-800">AI Assistant</h1>
+          <p className="text-xs text-gray-400 mt-0.5">Ask questions about your literature corpus</p>
+        </div>
+        <button
+          onClick={() => setInput('Analyse the research gaps across the included papers. Which methods are underrepresented? What datasets have not been studied? What limitations recur across papers? Suggest the most promising directions for future work.')}
+          className="shrink-0 text-[10px] px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded-lg border border-emerald-100 transition-colors"
+        >
+          Gap Analysis
+        </button>
       </div>
 
       {/* Messages */}
@@ -91,7 +99,7 @@ export default function ChatPanel() {
               {[
                 'Summarize the main themes across included papers',
                 'What methodologies are most common?',
-                'Which papers focus on machine learning?',
+                'Analyse research gaps and suggest future directions',
               ].map(hint => (
                 <button
                   key={hint}

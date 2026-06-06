@@ -10,7 +10,7 @@ async function assertProjectOwner(projectId, userId) {
   return project;
 }
 
-function buildContext(papers) {
+function buildCorpusContext(papers) {
   if (!papers.length) return 'No papers have been imported into this project yet.';
   return papers.map(p =>
     `[ID:${p.id}] ${p.title} (${p.authors || 'Unknown authors'}, ${p.year || 'n.d.'}) — Status: ${p.status}` +
@@ -18,30 +18,46 @@ function buildContext(papers) {
   ).join('\n\n');
 }
 
+function buildExtractionContext(papers) {
+  const extracted = papers.filter(p => p.status === 'INCLUDED' && p.extractionResult);
+  if (!extracted.length) return '';
+  const rows = extracted.map(p => {
+    const e = p.extractionResult;
+    return `[ID:${p.id}] ${p.title}
+  Method: ${e.method || 'N/A'}
+  Dataset: ${e.dataset || 'N/A'}
+  Metric: ${e.metric || 'N/A'}
+  Performance: ${e.performance || 'N/A'}
+  Limitations: ${e.limitations || 'N/A'}`;
+  }).join('\n\n');
+  return `\n\n--- EXTRACTED STRUCTURED DATA (included papers) ---\n${rows}`;
+}
+
 export async function chat(projectId, userId, userMessage) {
   const project = await assertProjectOwner(projectId, userId);
 
   const papers = await prisma.paper.findMany({
-    where: { projectId },
-    select: { id: true, title: true, authors: true, year: true, abstract: true, status: true },
+    where:   { projectId },
+    select:  { id: true, title: true, authors: true, year: true, abstract: true, status: true, extractionResult: true },
   });
 
   const history = await prisma.chatMessage.findMany({
-    where: { projectId },
+    where:   { projectId },
     orderBy: { createdAt: 'asc' },
-    take: 20,
+    take:    20,
   });
 
   const systemPrompt = `You are a research assistant for a systematic literature review project titled "${project.name}".
 You have access to the following papers in the corpus:
 
-${buildContext(papers)}
+${buildCorpusContext(papers)}${buildExtractionContext(papers)}
 
 Rules:
 - Only reference papers listed above. Never invent citations.
 - When citing a paper, include its ID in brackets e.g. [ID:abc123].
 - Be concise and academic in tone.
-- If asked about papers not in the corpus, say they are not in the library.`;
+- If asked about papers not in the corpus, say they are not in the library.
+- When doing gap analysis, reason only from the structured extraction data provided.`;
 
   const messages = [
     ...history.map(m => ({ role: m.role, content: m.content })),
@@ -68,7 +84,7 @@ Rules:
 export async function getHistory(projectId, userId) {
   await assertProjectOwner(projectId, userId);
   return prisma.chatMessage.findMany({
-    where: { projectId },
+    where:   { projectId },
     orderBy: { createdAt: 'asc' },
   });
 }

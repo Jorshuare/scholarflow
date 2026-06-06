@@ -60,9 +60,10 @@ const NAV = [
     label: 'ANALYSE',
     color: '#10b981',
     links: [
-      { to: 'prisma',     text: 'PRISMA',      Icon: Icon.Prisma     },
-      { to: 'extraction', text: 'Extraction',  Icon: Icon.Extraction },
-      { to: 'ai',         text: 'AI Assistant',Icon: Icon.AI         },
+      { to: 'prisma',          text: 'PRISMA',          Icon: Icon.Prisma     },
+      { to: 'full-text-queue', text: 'Full-Text Queue', Icon: Icon.Papers     },
+      { to: 'evidence-matrix', text: 'Evidence Matrix', Icon: Icon.Extraction },
+      { to: 'ai',              text: 'AI Assistant',    Icon: Icon.AI         },
     ],
   },
 ];

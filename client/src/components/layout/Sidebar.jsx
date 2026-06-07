@@ -1,7 +1,7 @@
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-/* Minimal inline SVG icons */
 const Icon = {
   Papers:     () => (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 shrink-0">
@@ -75,28 +75,82 @@ const NAV = [
   },
 ];
 
+const MIN_W     = 160;
+const MAX_W     = 360;
+const DEFAULT_W = 224; // original w-56
+
 export default function Sidebar({ projectName, projectId }) {
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
+
+  const [width, setWidth] = useState(() => {
+    const saved = localStorage.getItem('sf_sidebar_width');
+    if (!saved) return DEFAULT_W;
+    const n = parseInt(saved, 10);
+    return Number.isFinite(n) ? Math.min(MAX_W, Math.max(MIN_W, n)) : DEFAULT_W;
+  });
+
+  const isDragging = useRef(false);
+  const startX     = useRef(0);
+  const startW     = useRef(0);
+
+  useEffect(() => {
+    localStorage.setItem('sf_sidebar_width', width);
+  }, [width]);
+
+  function handleDragStart(e) {
+    e.preventDefault();
+    isDragging.current = true;
+    startX.current     = e.clientX;
+    startW.current     = width;
+
+    document.body.style.cursor     = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(e) {
+      if (!isDragging.current) return;
+      const next = Math.min(MAX_W, Math.max(MIN_W, startW.current + (e.clientX - startX.current)));
+      setWidth(next);
+    }
+
+    function onUp() {
+      isDragging.current          = false;
+      document.body.style.cursor  = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  }
+
+  // Collapse label text when sidebar is narrow
+  const compact = width < 192;
 
   return (
-    <aside className="w-56 shrink-0 h-screen sticky top-0 bg-[#002868] border-r border-[#003580] flex flex-col">
+    <aside
+      style={{ width }}
+      className="shrink-0 relative h-screen sticky top-0 bg-[#002868] border-r border-[#003580] flex flex-col transition-none"
+    >
       {/* Logo + back */}
-      <div className="px-4 py-4 border-b border-[#003580]">
+      <div className="px-4 py-4 border-b border-[#003580] overflow-hidden">
         <button
           onClick={() => navigate('/projects')}
-          className="text-[10px] text-[#7BA3CC] hover:text-white transition-colors mb-2 block"
+          className="text-[10px] text-[#7BA3CC] hover:text-white transition-colors mb-2 block truncate"
         >
           ← All reviews
         </button>
-        <p className="text-sm font-bold text-[#C8A951] leading-none mb-1 tracking-wide">
+        <p className="text-sm font-bold text-[#C8A951] leading-none mb-1 tracking-wide truncate">
           ScholarFlow
         </p>
-        <p className="text-xs text-white/80 font-medium truncate leading-snug">{projectName}</p>
+        {!compact && (
+          <p className="text-xs text-white/80 font-medium truncate leading-snug">{projectName}</p>
+        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-3 space-y-4 overflow-y-auto">
+      <nav className="flex-1 px-2 py-3 space-y-4 overflow-y-auto overflow-x-hidden">
         {/* Overview link */}
         <NavLink
           to={`/projects/${projectId}/home`}
@@ -113,20 +167,22 @@ export default function Sidebar({ projectName, projectId }) {
               <span style={isActive ? { color: '#C8A951' } : {}}>
                 <HomeIcon />
               </span>
-              <span>Overview</span>
-              {isActive && <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951]" />}
+              {!compact && <span className="truncate">Overview</span>}
+              {isActive && !compact && <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951] shrink-0" />}
             </>
           )}
         </NavLink>
         <div className="border-t border-[#003580] mx-1" />
         {NAV.map(section => (
           <div key={section.label}>
-            <p
-              className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1"
-              style={{ color: section.color }}
-            >
-              {section.label}
-            </p>
+            {!compact && (
+              <p
+                className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1 truncate"
+                style={{ color: section.color }}
+              >
+                {section.label}
+              </p>
+            )}
             {section.links.map(link => (
               <NavLink
                 key={link.to}
@@ -142,14 +198,14 @@ export default function Sidebar({ projectName, projectId }) {
                 {({ isActive }) => (
                   <>
                     <span
-                      className="transition-colors"
+                      className="transition-colors shrink-0"
                       style={isActive ? { color: '#C8A951' } : {}}
                     >
                       <link.Icon />
                     </span>
-                    <span>{link.text}</span>
-                    {isActive && (
-                      <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951]" />
+                    {!compact && <span className="truncate">{link.text}</span>}
+                    {isActive && !compact && (
+                      <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951] shrink-0" />
                     )}
                   </>
                 )}
@@ -160,13 +216,21 @@ export default function Sidebar({ projectName, projectId }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#003580]">
+      <div className="px-4 py-3 border-t border-[#003580] overflow-hidden">
         <button
           onClick={() => { logout(); navigate('/login'); }}
-          className="text-xs text-[#7BA3CC] hover:text-red-400 transition-colors"
+          className="text-xs text-[#7BA3CC] hover:text-red-400 transition-colors truncate"
         >
-          Sign out
+          {compact ? '←' : 'Sign out'}
         </button>
+      </div>
+
+      {/* Drag handle — sits on the right edge */}
+      <div
+        onMouseDown={handleDragStart}
+        className="absolute top-0 right-0 w-[5px] h-full cursor-col-resize group z-10"
+      >
+        <div className="absolute right-0 top-0 w-[2px] h-full bg-transparent group-hover:bg-[#C8A951]/50 transition-colors duration-150" />
       </div>
     </aside>
   );

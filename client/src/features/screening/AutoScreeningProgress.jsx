@@ -1,17 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getStatus } from '../../services/autoScreening.service';
+import { useToast } from '../../context/ToastContext';
 
 export default function AutoScreeningProgress() {
   const { id: projectId } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [job, setJob] = useState({ status: 'RUNNING', processed: 0, total: 0, included: 0, excluded: 0, uncertain: 0 });
-  const intervalRef = useRef(null);
+  const intervalRef    = useRef(null);
+  const failedToasted  = useRef(false);
 
   useEffect(() => {
     async function poll() {
       const data = await getStatus(projectId);
       setJob(data);
+      if (data.status === 'FAILED' && !failedToasted.current) {
+        failedToasted.current = true;
+        toast.error('Auto-screening failed. Check your Groq API key or try again.');
+      }
       if (data.status === 'COMPLETE' || data.status === 'FAILED') {
         clearInterval(intervalRef.current);
       }

@@ -3,6 +3,7 @@ import { useOutletContext, useParams } from 'react-router-dom';
 import { listPapers, deletePaper } from '../../services/papers.service';
 import PaperSidePanel from './PaperSidePanel';
 import ImportModal from './ImportModal';
+import { useToast } from '../../context/ToastContext';
 
 const STATUS_STYLE = {
   INCLUDED: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
@@ -13,6 +14,8 @@ const STATUS_STYLE = {
 export default function PaperTable() {
   const { id: projectId } = useParams();
   const { project }       = useOutletContext();
+
+  const toast = useToast();
 
   const [papers, setPapers]         = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -73,8 +76,10 @@ export default function PaperTable() {
   // ── Bulk delete ──────────────────────────────────────────────────────────
   async function handleBulkDelete() {
     setDeleting(true);
-    const ids = [...checkedIds];
-    await Promise.allSettled(ids.map(id => deletePaper(projectId, id)));
+    const ids     = [...checkedIds];
+    const results = await Promise.allSettled(ids.map(id => deletePaper(projectId, id)));
+    const failed  = results.filter(r => r.status === 'rejected').length;
+    if (failed > 0) toast.error(`${failed} paper${failed > 1 ? 's' : ''} could not be deleted.`);
     setPapers(prev => prev.filter(p => !checkedIds.has(p.id)));
     if (selected && checkedIds.has(selected.id)) setSelected(null);
     setCheckedIds(new Set());

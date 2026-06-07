@@ -16,6 +16,7 @@ import TagsManager            from '../features/tags/TagsManager';
 import CriteriaManager        from '../features/screening/CriteriaManager';
 import AutoScreeningProgress  from '../features/screening/AutoScreeningProgress';
 import ScreeningQueues        from '../features/screening/ScreeningQueues';
+import Notes                  from '../pages/Notes';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -49,6 +50,7 @@ export default function AppRouter() {
           <Route path="full-text-queue" element={<FullTextQueue />} />
           <Route path="evidence-matrix" element={<EvidenceMatrix />} />
           <Route path="ai"              element={<ChatPanel />} />
+          <Route path="notes"           element={<Notes />} />
         </Route>
       </Routes>
     </BrowserRouter>

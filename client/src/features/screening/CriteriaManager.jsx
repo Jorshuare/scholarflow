@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { listCriteria, createCriterion, deleteCriterion } from '../../services/criteria.service';
 import { getStatus, runScreening } from '../../services/autoScreening.service';
+import { useToast } from '../../context/ToastContext';
 
 function CriterionBadge({ criterion, onDelete, locked }) {
   const isIC = criterion.type === 'INCLUSION';
@@ -38,6 +39,7 @@ export default function CriteriaManager() {
   const [description, setDesc]  = useState('');
   const [saving, setSaving]     = useState(false);
   const [running, setRunning]   = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     Promise.all([
@@ -73,7 +75,7 @@ export default function CriteriaManager() {
       await runScreening(projectId);
       navigate(`/projects/${projectId}/screening/progress`);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to start screening');
+      toast.error(err.response?.data?.error || 'Failed to start screening. Please try again.');
       setRunning(false);
     }
   }

@@ -75,16 +75,16 @@ const NAV = [
   },
 ];
 
-const MIN_W     = 160;
+const MIN_W     = 48;
 const MAX_W     = 360;
-const DEFAULT_W = 224; // original w-56
+const DEFAULT_W = 180;
 
 export default function Sidebar({ projectName, projectId }) {
   const { logout } = useAuth();
   const navigate   = useNavigate();
 
   const [width, setWidth] = useState(() => {
-    const saved = localStorage.getItem('sf_sidebar_width');
+    const saved = localStorage.getItem('sf_sidebar_width_v2');
     if (!saved) return DEFAULT_W;
     const n = parseInt(saved, 10);
     return Number.isFinite(n) ? Math.min(MAX_W, Math.max(MIN_W, n)) : DEFAULT_W;
@@ -95,7 +95,7 @@ export default function Sidebar({ projectName, projectId }) {
   const startW     = useRef(0);
 
   useEffect(() => {
-    localStorage.setItem('sf_sidebar_width', width);
+    localStorage.setItem('sf_sidebar_width_v2', width);
   }, [width]);
 
   function handleDragStart(e) {
@@ -125,8 +125,8 @@ export default function Sidebar({ projectName, projectId }) {
     document.addEventListener('mouseup',   onUp);
   }
 
-  // Collapse label text when sidebar is narrow
-  const compact = width < 192;
+  const iconOnly = width < 72;   // 48–71px: centred icons, no text at all
+  const compact  = width < 130;  // 72–129px: icons + truncated labels, no section headings
 
   return (
     <aside
@@ -134,18 +134,23 @@ export default function Sidebar({ projectName, projectId }) {
       className="shrink-0 relative h-screen sticky top-0 bg-[#002868] border-r border-[#003580] flex flex-col transition-none"
     >
       {/* Logo + back */}
-      <div className="px-4 py-4 border-b border-[#003580] overflow-hidden">
+      <div className={`border-b border-[#003580] overflow-hidden ${iconOnly ? 'px-1 py-3 flex flex-col items-center' : 'px-4 py-4'}`}>
         <button
           onClick={() => navigate('/projects')}
           className="text-[10px] text-[#7BA3CC] hover:text-white transition-colors mb-2 block truncate"
+          title="All reviews"
         >
-          ← All reviews
+          {iconOnly ? '←' : '← All reviews'}
         </button>
-        <p className="text-sm font-bold text-[#C8A951] leading-none mb-1 tracking-wide truncate">
-          ScholarFlow
-        </p>
-        {!compact && (
-          <p className="text-xs text-white/80 font-medium truncate leading-snug">{projectName}</p>
+        {!iconOnly && (
+          <>
+            <p className="text-sm font-bold text-[#C8A951] leading-none mb-1 tracking-wide truncate">
+              ScholarFlow
+            </p>
+            {!compact && (
+              <p className="text-xs text-white/80 font-medium truncate leading-snug">{projectName}</p>
+            )}
+          </>
         )}
       </div>
 
@@ -154,8 +159,11 @@ export default function Sidebar({ projectName, projectId }) {
         {/* Overview link */}
         <NavLink
           to={`/projects/${projectId}/home`}
+          title="Overview"
           className={({ isActive }) =>
-            `flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all duration-150 ${
+            `flex items-center py-1.5 rounded-lg text-sm transition-all duration-150 ${
+              iconOnly ? 'justify-center px-1' : 'gap-2 px-2'
+            } ${
               isActive
                 ? 'bg-[#003580] text-white font-medium'
                 : 'text-[#7BA3CC] hover:text-white hover:bg-[#003070]'
@@ -167,7 +175,7 @@ export default function Sidebar({ projectName, projectId }) {
               <span style={isActive ? { color: '#C8A951' } : {}}>
                 <HomeIcon />
               </span>
-              {!compact && <span className="truncate">Overview</span>}
+              {!iconOnly && <span className="truncate">Overview</span>}
               {isActive && !compact && <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951] shrink-0" />}
             </>
           )}
@@ -187,8 +195,11 @@ export default function Sidebar({ projectName, projectId }) {
               <NavLink
                 key={link.to}
                 to={`/projects/${projectId}/${link.to}`}
+                title={link.text}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all duration-150 ${
+                  `flex items-center py-1.5 rounded-lg text-sm transition-all duration-150 ${
+                    iconOnly ? 'justify-center px-1' : 'gap-2 px-2'
+                  } ${
                     isActive
                       ? 'bg-[#003580] text-white font-medium'
                       : 'text-[#7BA3CC] hover:text-white hover:bg-[#003070]'
@@ -203,7 +214,7 @@ export default function Sidebar({ projectName, projectId }) {
                     >
                       <link.Icon />
                     </span>
-                    {!compact && <span className="truncate">{link.text}</span>}
+                    {!iconOnly && <span className="truncate">{link.text}</span>}
                     {isActive && !compact && (
                       <span className="ml-auto w-1 h-1 rounded-full bg-[#C8A951] shrink-0" />
                     )}
@@ -216,12 +227,13 @@ export default function Sidebar({ projectName, projectId }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#003580] overflow-hidden">
+      <div className={`border-t border-[#003580] overflow-hidden ${iconOnly ? 'py-3 flex justify-center' : 'px-4 py-3'}`}>
         <button
           onClick={() => { logout(); navigate('/login'); }}
+          title="Sign out"
           className="text-xs text-[#7BA3CC] hover:text-red-400 transition-colors truncate"
         >
-          {compact ? '←' : 'Sign out'}
+          {iconOnly ? '⏻' : compact ? '←' : 'Sign out'}
         </button>
       </div>
 

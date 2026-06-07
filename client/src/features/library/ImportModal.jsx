@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import { importBibtex, importCsv } from '../../services/papers.service';
+import { useToast } from '../../context/ToastContext';
 
 export default function ImportModal({ projectId, onClose, onImported }) {
+  const toast = useToast();
+
   const [tab, setTab]         = useState('bibtex');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
@@ -16,7 +19,9 @@ export default function ImportModal({ projectId, onClose, onImported }) {
       const result = tab === 'bibtex'
         ? await importBibtex(projectId, file)
         : await importCsv(projectId, file);
-      onImported(result.imported);
+      const n = result.imported;
+      toast.success(`Imported ${n} paper${n !== 1 ? 's' : ''} successfully`);
+      onImported(n);
       onClose();
     } catch (err) {
       setError(err.response?.data?.error || err.message || `Import failed (${err.response?.status})`);

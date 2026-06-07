@@ -42,6 +42,14 @@ const Icon = {
       <path d="M8 1.5l1.5 3.5 3.5 1-2.5 2.5.7 3.8L8 10.5l-3.2 1.8.7-3.8L3 6l3.5-1z"/>
     </svg>
   ),
+  Notes:      () => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 shrink-0">
+      <rect x="2" y="1.5" width="12" height="13" rx="1.5"/>
+      <line x1="4.5" y1="5.5" x2="11.5" y2="5.5" strokeLinecap="round"/>
+      <line x1="4.5" y1="8"   x2="11.5" y2="8"   strokeLinecap="round"/>
+      <line x1="4.5" y1="10.5" x2="8"   y2="10.5" strokeLinecap="round"/>
+    </svg>
+  ),
 };
 
 const HomeIcon = () => (
@@ -71,6 +79,7 @@ const NAV = [
       { to: 'full-text-queue', text: 'Full-Text Queue', Icon: Icon.Papers     },
       { to: 'evidence-matrix', text: 'Evidence Matrix', Icon: Icon.Extraction },
       { to: 'ai',              text: 'AI Assistant',    Icon: Icon.AI         },
+      { to: 'notes',           text: 'Notes',           Icon: Icon.Notes      },
     ],
   },
 ];

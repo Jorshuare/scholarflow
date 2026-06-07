@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { listProjects } from '../../services/projects.service';
+import { listProjects, deleteProject } from '../../services/projects.service';
 import NewProjectModal from './NewProjectModal';
 
 // ── Progress ring ────────────────────────────────────────────────────────────
@@ -112,9 +112,24 @@ function EmptyIllustration() {
 export default function ProjectList() {
   const { currentUser, logout } = useAuth();
   const navigate                = useNavigate();
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [projects, setProjects]   = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
+  const [deleting, setDeleting]   = useState(false);
+
+  async function handleDelete(e, id) {
+    e.stopPropagation();
+    if (confirmId !== id) { setConfirmId(id); return; }
+    setDeleting(true);
+    try {
+      await deleteProject(id);
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } finally {
+      setConfirmId(null);
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     listProjects().then(setProjects).finally(() => setLoading(false));
@@ -314,8 +329,21 @@ export default function ProjectList() {
                       </div>
                     </div>
 
-                    {/* Progress ring */}
-                    <ProgressRing value={s.included} total={s.total} />
+                    {/* Progress ring + delete */}
+                    <div className="flex flex-col items-center gap-2">
+                      <ProgressRing value={s.included} total={s.total} />
+                      <button
+                        onClick={(e) => handleDelete(e, p.id)}
+                        disabled={deleting && confirmId === p.id}
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg transition-colors ${
+                          confirmId === p.id
+                            ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                            : 'text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
+                        {confirmId === p.id ? (deleting ? 'Deleting…' : 'Confirm?') : 'Delete'}
+                      </button>
+                    </div>
                   </div>
                 </button>
               );

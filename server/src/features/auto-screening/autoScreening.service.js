@@ -163,35 +163,53 @@ export async function getResults(projectId, userId, queue) {
   return results;
 }
 
+// Builds the exclusion reason stored on the paper from the AI screening result,
+// prefixing any triggered exclusion criteria codes (e.g. "EC1, EC2: <reasoning>").
+function buildExclusionReason(sr) {
+  if (!sr) return null;
+  const codes     = (sr.triggeredExclusion ?? []).join(', ');
+  const reasoning = sr.reasoning?.trim() || '';
+  if (codes && reasoning) return `${codes}: ${reasoning}`;
+  return reasoning || codes || null;
+}
+
 export async function confirmDecisions(projectId, userId, decisions) {
   await assertOwner(projectId, userId);
 
-  await Promise.all(decisions.map(({ paperId, finalDecision }) =>
-    prisma.screeningResult.update({
+  await Promise.all(decisions.map(async ({ paperId, finalDecision }) => {
+    const sr = await prisma.screeningResult.update({
       where: { paperId },
       data:  { finalDecision },
-    }).then(() =>
-      prisma.paper.update({
-        where: { id: paperId },
-        data:  { status: finalDecision === 'INCLUDE' ? 'INCLUDED' : 'EXCLUDED' },
-      })
-    )
-  ));
+    });
+
+    const isExclude = finalDecision !== 'INCLUDE';
+    await prisma.paper.update({
+      where: { id: paperId },
+      data:  {
+        status:          isExclude ? 'EXCLUDED' : 'INCLUDED',
+        exclusionReason: isExclude ? buildExclusionReason(sr) : null,
+      },
+    });
+  }));
 
   return { confirmed: decisions.length };
 }
 
-export async function overrideDecision(projectId, userId, paperId, finalDecision) {
+export async function overrideDecision(projectId, userId, paperId, finalDecision, reason) {
   await assertOwner(projectId, userId);
 
-  await prisma.screeningResult.update({
+  const sr = await prisma.screeningResult.update({
     where: { paperId },
     data:  { finalDecision, humanOverride: true },
   });
 
+  const isExclude = finalDecision !== 'INCLUDE';
   await prisma.paper.update({
     where: { id: paperId },
-    data:  { status: finalDecision === 'INCLUDE' ? 'INCLUDED' : 'EXCLUDED' },
+    data:  {
+      status:          isExclude ? 'EXCLUDED' : 'INCLUDED',
+      exclusionReason: isExclude ? (reason?.trim() || buildExclusionReason(sr)) : null,
+    },
   });
 
   return { overridden: true };

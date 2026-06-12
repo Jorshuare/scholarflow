@@ -26,10 +26,10 @@ export const confirm = asyncHandler(async (req, res) => {
 });
 
 export const override = asyncHandler(async (req, res) => {
-  const { finalDecision } = req.body;
+  const { finalDecision, reason } = req.body;
   if (!['INCLUDE', 'EXCLUDE'].includes(finalDecision))
     return res.status(400).json({ error: 'finalDecision must be INCLUDE or EXCLUDE' });
-  res.json(await overrideDecision(req.params.id, req.user.id, req.params.pid, finalDecision));
+  res.json(await overrideDecision(req.params.id, req.user.id, req.params.pid, finalDecision, reason));
 });
 
 export const methodologyReport = asyncHandler(async (req, res) => {

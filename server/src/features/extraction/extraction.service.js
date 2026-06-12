@@ -19,15 +19,24 @@ async function assertPaper(projectId, paperId) {
   return paper;
 }
 
+// LLaMA 3.3 70B has a 128K-token context window, so a full paper (~10-15K tokens)
+// fits comfortably. We send as much of the paper as possible — the methods, datasets,
+// and results live in the middle, which the old first-2000/last-1000 approach discarded.
+const MAX_CONTEXT_CHARS = 50000; // ≈ 12-13K tokens
+
 function buildExtractionContext(rawText) {
-  const start = rawText.substring(0, 2000);
-  const end   = rawText.substring(Math.max(0, rawText.length - 1000));
-  return `${start}\n\n[...middle omitted...]\n\n${end}`;
+  const clean = rawText.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (clean.length <= MAX_CONTEXT_CHARS) return clean;
+  // For very long papers, keep a large head (abstract → methods → results) plus a
+  // tail (conclusion, limitations, future work — usually at the very end).
+  const head = clean.substring(0, 38000);
+  const tail = clean.substring(clean.length - 12000);
+  return `${head}\n\n[...middle section omitted for length...]\n\n${tail}`;
 }
 
 async function callGroqExtraction(title, context, attempt = 1) {
-  const system = 'You are a research paper data extraction assistant. Extract specific fields from the paper text. Respond ONLY with valid JSON. No markdown, no preamble. If a field cannot be found, use null. Keep all values under 30 words each.';
-  const user   = `Extract these fields from the paper.\n\nPaper title: ${title}\n\nPaper text:\n${context}\n\nReturn this exact JSON:\n{\n  "method": "primary method or model used",\n  "dataset": "dataset(s) used for evaluation",\n  "metric": "evaluation metric(s) used",\n  "performance": "key quantitative result",\n  "limitations": "main limitation stated by authors",\n  "futureWork": "future work directions mentioned",\n  "contribution": "one-sentence summary of main contribution"\n}`;
+  const system = 'You are a meticulous research-paper data extraction assistant. Read the paper text carefully and extract the requested fields with concrete specifics: name the actual datasets, report the actual metric names, and include the actual numeric results stated in the paper. Prefer precise details from the methods and results sections over vague summaries. If a field genuinely cannot be found, use null. Respond ONLY with a valid JSON object.';
+  const user   = `Extract the following fields from this research paper. Be specific — include dataset names, model names, metric names, and the actual numbers reported in the paper.\n\nPaper title: ${title}\n\nPaper text:\n${context}\n\nReturn a JSON object with exactly these keys:\n{\n  "method": "the main technical approach, model, or algorithm, named specifically (≤45 words)",\n  "dataset": "the dataset(s) used for evaluation, with names and sizes if stated (≤45 words)",\n  "metric": "the evaluation metric(s) used, named exactly (≤30 words)",\n  "performance": "the key quantitative results WITH the actual numbers reported (≤45 words)",\n  "limitations": "the main limitation(s) the authors acknowledge (≤45 words)",\n  "futureWork": "future work directions the authors mention (≤45 words)",\n  "contribution": "the main contribution as one specific sentence (≤45 words)"\n}`;
 
   const backoff = [0, 2000, 4000, 8000];
   for (let i = 0; i < attempt; i++) {
@@ -36,6 +45,9 @@ async function callGroqExtraction(title, context, attempt = 1) {
 
   const res = await groq.chat.completions.create({
     model: GROQ_MODEL,
+    temperature: 0.2,
+    max_tokens: 900,
+    response_format: { type: 'json_object' },
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
   });
 

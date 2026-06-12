@@ -1,6 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getResults, confirmDecisions, overrideDecision, getMethodology } from '../../services/autoScreening.service';
+
+// Clamped reasoning line that reveals the full AI reasoning on hover.
+// Uses fixed positioning because the queue columns are inside overflow-y-auto
+// containers that would otherwise clip a normally-positioned tooltip.
+function HoverReasoning({ text, className = 'text-gray-400' }) {
+  const [hover, setHover] = useState(false);
+  const [pos, setPos]     = useState({ top: 0, left: 0 });
+  const ref = useRef(null);
+
+  if (!text) return null;
+
+  function show() {
+    const rect = ref.current?.getBoundingClientRect();
+    if (rect) {
+      setPos({
+        top:  rect.bottom + 6,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 340)),
+      });
+    }
+    setHover(true);
+  }
+
+  return (
+    <>
+      <p
+        ref={ref}
+        onMouseEnter={show}
+        onMouseLeave={() => setHover(false)}
+        className={`text-[10px] mt-1 line-clamp-1 cursor-help ${className}`}
+      >
+        {text}
+      </p>
+      {hover && (
+        <div
+          className="fixed z-[60] w-[320px] bg-gray-900 text-white text-[11px] leading-relaxed rounded-lg px-3 py-2 shadow-xl pointer-events-none"
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {text}
+        </div>
+      )}
+    </>
+  );
+}
 
 function ConfidenceBar({ value, color }) {
   return (
@@ -147,7 +190,7 @@ function IncludedQueue({ results, projectId, confirmed, onConfirmed, onConfirmin
                     {r.paper.venue && <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{r.paper.venue}</span>}
                   </div>
                   <ConfidenceBar value={r.confidence} color="#10b981" />
-                  <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{r.reasoning}</p>
+                  <HoverReasoning text={r.reasoning} />
                 </div>
               </div>
             </div>
@@ -339,7 +382,7 @@ function ExcludedQueue({ results, projectId, confirmed, onConfirmed, onConfirmin
                 {r.paper.venue && <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{r.paper.venue}</span>}
               </div>
               <ConfidenceBar value={r.confidence} color="#ef4444" />
-              <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{r.reasoning}</p>
+              <HoverReasoning text={r.reasoning} />
             </div>
           ))
         )}
